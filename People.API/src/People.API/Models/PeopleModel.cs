@@ -1,17 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace People.API.Models
 {
     public class PeopleModel
     {
-        public int Id { get; set; }
         public string FirstName { get; set; }
+
         public string LastName { get; set; }
-        public int Jmbg { get; set; }
+
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        [MaxLength (13)]
+        public long Jmbg { get; set; }
+
         public string Gender { get; set; }
+
         public string Occupation { get; set; }
     }
 }

@@ -1,25 +1,53 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using People.API.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Threading.Tasks;
 
 namespace People.API
 {
     public class Startup
     {
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
+            var connectionString =
+                @"Data Source=.\SQLEXPRESS;Initial Catalog=PeopleInfoDb;Integrated Security=True;MultipleActiveResultSets=True";
+
+            services.AddDbContext<PeopleContext>
+                (p => p.UseSqlServer(connectionString));
+
+            services.AddIdentity<IdentityUser, IdentityRole>(config =>
+            {
+                config.User.RequireUniqueEmail = true;
+                config.Password.RequiredLength = 6;
+                config.Cookies.ApplicationCookie.LoginPath = "/Auth/Login";
+                config.Cookies.ApplicationCookie.Events = new CookieAuthenticationEvents()
+                {
+                    OnRedirectToLogin = async ctx =>
+                    {
+                        if (ctx.Request.Path.StartsWithSegments("/api") &&
+                        ctx.Response.StatusCode == 200)
+                        {
+                            ctx.Response.StatusCode = 401;
+                        }
+                        else
+                        {
+                            ctx.Response.Redirect(ctx.RedirectUri);
+                        }
+                        await Task.Yield();
+                    }
+                };
+            })
+            .AddEntityFrameworkStores<PeopleContext>();
+
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole();
@@ -33,19 +61,15 @@ namespace People.API
                 app.UseExceptionHandler();
             }
 
-            app.UseMvc();
+            app.UseIdentity();
 
-
-
-         //  app.Run((context) =>
-         //  {
-         //      throw new Exception("Exception");
-         //  });
-         //
-         //  app.Run(async (context) =>
-         //  {
-         //      await context.Response.WriteAsync("Hello World!");
-         //  });
+            app.UseMvc(config =>
+            {
+                config.MapRoute(
+                    name: "Default",
+                    template: "{controller}/{action}/{id?}",
+                    defaults: new { controller = "Auth", action = "Login" });
+            });
         }
     }
 }
