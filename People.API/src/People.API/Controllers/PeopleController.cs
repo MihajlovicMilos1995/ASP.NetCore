@@ -5,45 +5,43 @@ using Microsoft.AspNetCore.Mvc;
 using People.API.Models;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace People.API.Controllers
 {
     [Route("api/[controller]")]
-
     public class PeopleController : Controller
     {
         private PeopleContext _ctx;
         private UserManager<IdentityUser> _userManager;
-       
+
         public PeopleController(PeopleContext ctx, UserManager<IdentityUser> UserManager)
         {
             _ctx = ctx;
             _userManager = UserManager;
         }
 
-        public async Task EnsureSeedData()
+        [HttpPost("adduser")]
+        public IActionResult AddUser()
         {
-            if (await _userManager.FindByEmailAsync("mihajlovicmilos16@gmai.com") == null)
+            var user = new IdentityUser()
             {
-                var user = new IdentityUser()
-                {
-                    UserName = "Ultradumb",
-                    Email = "mihajlovicmilos16@gmail.com"
-                };
-                await _userManager.CreateAsync(user, "P@ssw0rd!");
-            }
+                UserName =  "Ultradumb",
+                Email = "milos@people.com"
+            };
+
+            var id = _userManager.CreateAsync(user, "P@ssw0rd!").Result;
+            return new NoContentResult();
         }
 
         [AllowAnonymous]
-        [HttpGet]
-        public IEnumerable<PeopleModel> GetAll()
+        [HttpGet("getAll")]
+        public IEnumerable<PeopleModel> GetAllPeople()
         {
             return _ctx.People.ToList();
         }
 
         [AllowAnonymous]
-        [HttpGet("{Jmbg}", Name = "GetBy")]
+        [HttpGet("getById/{Jmbg}")]
         public IActionResult GetById(long Jmbg)
         {
             var person = _ctx.People.Find(Jmbg);
@@ -55,7 +53,7 @@ namespace People.API.Controllers
         }
 
         [Authorize]
-        [HttpPost]
+        [HttpPost("createPerson")]
         public IActionResult Create([FromBody] PeopleModel person)
         {
             if (person == null)
@@ -65,18 +63,18 @@ namespace People.API.Controllers
             _ctx.Add(person);
             _ctx.SaveChanges();
 
-            return CreatedAtRoute("GetPeople",
-                new { jmbg = person.Jmbg }, person);
+            return Created("api/people", person);
         }
 
         [Authorize]
-        [HttpPut("{Jmbg}")]
+        [HttpPut("update/{Jmbg}")]
         public IActionResult Update(long Jmbg, [FromBody] PeopleModel updatePerson)
         {
             if (updatePerson == null || updatePerson.Jmbg != Jmbg)
             {
                 return BadRequest();
             }
+
             var todo = _ctx.People.Find(Jmbg);
             if (todo == null)
             {
@@ -95,7 +93,7 @@ namespace People.API.Controllers
         }
 
         [Authorize]
-        [HttpDelete("{Jmbg}")]
+        [HttpDelete("delete/{Jmbg}")]
         public IActionResult Delete(long Jmbg)
         {
             var todo = _ctx.People.Find(Jmbg);
@@ -107,6 +105,36 @@ namespace People.API.Controllers
             _ctx.SaveChanges();
 
             return new NoContentResult();
+        }
+
+        [HttpGet ("person")]
+        public IActionResult SearchAndSort([FromQuery]string searchString, [FromQuery] string sortBy, [FromQuery] int page, [FromQuery] int peoplePerPage )
+        {
+            var people = from p in _ctx.People
+                         select p;
+
+            if(searchString != null)
+            {
+                people = people.Where(p => p.FirstName.Contains(searchString)
+                                        || p.LastName.Contains(searchString));
+            }
+            string sortOrder = sortBy;
+            if (sortOrder == "Descending")
+            {
+                people = people.OrderByDescending(p => p.FirstName);
+            }
+            else if (sortOrder == "Ascending")
+            {
+                people = people.OrderBy(p => p.FirstName);
+            }
+
+            peoplePerPage = 4;
+            if (page > 0)
+            {
+                people = people.Skip((page - 1) * peoplePerPage).Take(peoplePerPage);
+            }
+
+            return Ok(people);
         }
     }
 }

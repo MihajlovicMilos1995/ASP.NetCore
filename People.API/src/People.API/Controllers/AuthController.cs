@@ -30,7 +30,7 @@ namespace People.API.Controllers
             if (ModelState.IsValid)
             {
                 var signInResult = await _signInManager.PasswordSignInAsync
-                    (vm.Username,
+                    (vm.UserName,
                     vm.Password, true, false);
 
                 if (signInResult.Succeeded)

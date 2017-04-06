@@ -5,17 +5,83 @@ namespace People.API.Models
 {
     public class PeopleModel
     {
-        public string FirstName { get; set; }
+        private string firstName;
 
-        public string LastName { get; set; }
+        private string lastName;
+
+        private long jmbg;
+
+        private string gender;
+
+        private string occupation;
+
+
+
+        public string FirstName
+        {
+            get
+            {
+                return firstName;
+            }
+
+            set
+            {
+                firstName = value;
+            }
+        }
+
+        public string LastName
+        {
+            get
+            {
+                return lastName;
+            }
+
+            set
+            {
+                lastName = value;
+            }
+        }
 
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        [MaxLength (13)]
-        public long Jmbg { get; set; }
+        public long Jmbg
+        {
+            get
+            {
+                return jmbg;
+            }
 
-        public string Gender { get; set; }
+            set
+            {
+                jmbg = value;
+            }
+        }
 
-        public string Occupation { get; set; }
+        public string Gender
+        {
+            get
+            {
+                return gender;
+            }
+
+            set
+            {
+                gender = value;
+            }
+        }
+
+        public string Occupation
+        {
+            get
+            {
+                return occupation;
+            }
+
+            set
+            {
+                occupation = value;
+            }
+        }
     }
 }
