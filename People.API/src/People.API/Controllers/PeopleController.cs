@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using People.API.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +26,7 @@ namespace People.API.Controllers
         {
             var user = new IdentityUser()
             {
-                UserName =  "Ultradumb",
+                UserName = "Ultradumb",
                 Email = "milos@people.com"
             };
 
@@ -40,16 +41,21 @@ namespace People.API.Controllers
             return _ctx.People.ToList();
         }
 
+        public PeopleModel GetPerson(string Jmbg, bool includeJob)
+        {
+            if (includeJob)
+            {
+                return _ctx.People.Include(c => c.Job)
+                    .Where(c => c.Jmbg == Jmbg).FirstOrDefault();
+            }
+            return _ctx.People.Where(c => c.Jmbg == Jmbg).FirstOrDefault();
+        }
+
         [AllowAnonymous]
         [HttpGet("getById/{Jmbg}")]
-        public IActionResult GetById(long Jmbg)
+        public IActionResult GetById(string Jmbg, bool showJob)
         {
-            var person = _ctx.People.Find(Jmbg);
-            if (person == null)
-            {
-                return NotFound();
-            }
-            return new ObjectResult(person);
+                return new ObjectResult(GetPerson(Jmbg, showJob));
         }
 
         [Authorize]
@@ -66,15 +72,14 @@ namespace People.API.Controllers
             return Created("api/people", person);
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPut("update/{Jmbg}")]
-        public IActionResult Update(long Jmbg, [FromBody] PeopleModel updatePerson)
+        public IActionResult Update(string Jmbg, [FromBody] PeopleModel updatePerson)
         {
             if (updatePerson == null || updatePerson.Jmbg != Jmbg)
             {
                 return BadRequest();
             }
-
             var todo = _ctx.People.Find(Jmbg);
             if (todo == null)
             {
@@ -85,10 +90,9 @@ namespace People.API.Controllers
             todo.LastName = updatePerson.LastName;
             todo.Jmbg = updatePerson.Jmbg;
             todo.Gender = updatePerson.Gender;
-            todo.Occupation = updatePerson.Occupation;
+            todo.Job = updatePerson.Job;
 
             _ctx.SaveChanges();
-
             return new NoContentResult();
         }
 
@@ -107,23 +111,23 @@ namespace People.API.Controllers
             return new NoContentResult();
         }
 
-        [HttpGet ("person")]
-        public IActionResult SearchAndSort([FromQuery]string searchString, [FromQuery] string sortBy, [FromQuery] int page, [FromQuery] int peoplePerPage )
+        [HttpGet("person")]
+        public IActionResult SearchAndSort([FromQuery]string searchString, [FromQuery] string sortBy, [FromQuery] int page, [FromQuery] int peoplePerPage)
         {
             var people = from p in _ctx.People
                          select p;
 
-            if(searchString != null)
+            if (searchString != null)
             {
                 people = people.Where(p => p.FirstName.Contains(searchString)
                                         || p.LastName.Contains(searchString));
             }
             string sortOrder = sortBy;
-            if (sortOrder == "Descending")
+            if (sortOrder == "de")
             {
                 people = people.OrderByDescending(p => p.FirstName);
             }
-            else if (sortOrder == "Ascending")
+            else if (sortOrder == "asc")
             {
                 people = people.OrderBy(p => p.FirstName);
             }

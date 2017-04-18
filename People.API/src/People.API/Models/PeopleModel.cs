@@ -1,20 +1,23 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace People.API.Models
 {
     public class PeopleModel
     {
+        public PeopleModel()
+        {
+
+        }
+
         private string firstName;
 
         private string lastName;
 
-        private long jmbg;
+        private string jmbg;
 
         private string gender;
-
-        private string occupation;
-
 
 
         public string FirstName
@@ -45,7 +48,8 @@ namespace People.API.Models
 
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public long Jmbg
+        [RegularExpression("^[0-9]*$", ErrorMessage = "Jmbg must be numeric")]
+        public string Jmbg
         {
             get
             {
@@ -71,17 +75,6 @@ namespace People.API.Models
             }
         }
 
-        public string Occupation
-        {
-            get
-            {
-                return occupation;
-            }
-
-            set
-            {
-                occupation = value;
-            }
-        }
+        public  ICollection<JobModel> Job { get; set; }
     }
 }

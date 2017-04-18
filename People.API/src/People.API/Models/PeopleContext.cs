@@ -11,7 +11,7 @@ namespace People.API.Models
             Database.EnsureCreated();
         }
 
-        public DbSet <PeopleModel> People { get; set; }
-
+        public DbSet<PeopleModel> People { get; set; }
+        public DbSet<JobModel> Jobs { get; set; }
     }
 }
